@@ -54,10 +54,15 @@ class _SecondPageState extends State<SecondPage> {
                 ),
               ),
               SizedBox(height: 20),
+
+
               FilledButton(
-                onPressed: _pickDateTimeAndSchedule,
+                onPressed: () => _showScheduleOptions(context),  
                 child: Text("Add Reminder"),
               ),
+
+
+              
               SizedBox(height: 20),
               if(_selectedDay != null) ...[
                 Text("Reminders on  ${_selectedDay!.toLocal().toString().split(' ')[0]} ",
@@ -75,6 +80,7 @@ class _SecondPageState extends State<SecondPage> {
                     [TimeOfDay(hour: 10, minute: 30)],             // Day 2
                     [TimeOfDay(hour: 8, minute: 15), TimeOfDay(hour: 14, minute: 0)], // Day 3
                   ],
+                  Last_calendar
                 );
               },
               child: Text("Schedule Events"),
@@ -86,9 +92,102 @@ class _SecondPageState extends State<SecondPage> {
     );
   }
 
-  void Scheduler(DateTime startdate, List<List<TimeOfDay>> each_day){
+  void _pickDateTimeAndScheduleOnce(){
+    _pickDateTimeAndSchedule();
+  }
+
+  void _pickDailySchedule() async {
+    final now = DateTime.now();
+    final DateTime? pickedstartDate = await showDatePicker(
+      context: context,
+      initialDate: _selectedDay ?? now,
+      firstDate: now,
+      lastDate: DateTime(2030),
+    );
+    if (pickedstartDate == null) return;
+
+    final DateTime? pickedendDate = await showDatePicker(
+      context: context,
+      initialDate: _selectedDay ?? now,
+      firstDate: now,
+      lastDate: DateTime(2030),
+    );
+    if (pickedendDate == null) return;
+
+    final TimeOfDay? pickedTime = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay(hour: 8, minute: 0),
+    );
+
+    if (pickedTime == null) return;
+    Scheduler(pickedstartDate, [[pickedTime]],pickedendDate);
+
+  }
+  void _pickCustomSchedule() async {
+    final now = DateTime.now();
+    final DateTime? pickedstartDate = await showDatePicker(
+      context: context,
+      initialDate: _selectedDay ?? now,
+      firstDate: now,
+      lastDate: DateTime(2030),
+    );
+    if (pickedstartDate == null) return;
+
+    final DateTime? pickedendDate = await showDatePicker(
+      context: context,
+      initialDate: _selectedDay ?? now,
+      firstDate: now,
+      lastDate: DateTime(2030),
+    );
+    if (pickedendDate == null) return;
+
+  
+
+  }
+
+  void _showScheduleOptions(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text("Select Schedule Type"),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                title: Text("Once"),
+                onTap: () {
+                  Navigator.pop(context);
+                  _pickDateTimeAndScheduleOnce();
+                },
+              ),
+              ListTile(
+                title: Text("Daily"),
+                onTap: () {
+                  Navigator.pop(context);
+                  _pickDailySchedule();
+                },
+              ),
+              ListTile(
+                title: Text("Custom"),
+                onTap: () {
+                  Navigator.pop(context);
+                  _pickCustomSchedule();
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void Scheduler(DateTime startdate, List<List<TimeOfDay>> each_day,DateTime enddate){
     int day = 0;
-    while(startdate.isBefore(Last_calendar) || startdate.isAtSameMomentAs(Last_calendar)){
+    if (enddate.isAfter(Last_calendar)){
+      enddate = Last_calendar;
+    }
+    while(startdate.isBefore(enddate) || startdate.isAtSameMomentAs(enddate)){
       for (int i = 0;i<each_day[day].length;i++){
         TimeOfDay Time = each_day[day][i];
         setState(() {
