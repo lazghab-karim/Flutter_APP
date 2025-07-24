@@ -12,8 +12,8 @@ class SecondPage extends StatefulWidget {
 class _SecondPageState extends State<SecondPage> {
   DateTime _focusedDay = DateTime(DateTime.now().year,DateTime.now().month,DateTime.now().day);
   DateTime? _selectedDay;
-  DateTime First_Calendar = DateTime(DateTime.now().year, DateTime.now().month - 1, 1);
-  DateTime Last_calendar = DateTime(DateTime.now().year + 1, DateTime.now().month + 1, 0);
+  DateTime First_Calendar = DateTime(DateTime.now().year, 1, 1);
+  DateTime Last_calendar = DateTime(2080, 12, 31);
 
   // Map of calendar events (key: date, value: list of labels)
   Map<DateTime, List<TimeOfDay>> _events = {};
@@ -95,54 +95,172 @@ class _SecondPageState extends State<SecondPage> {
   void _pickDateTimeAndScheduleOnce(){
     _pickDateTimeAndSchedule();
   }
+  void _pickDailySchedule(BuildContext context) async {
+  DateTime? startDate;
+  DateTime? endDate;
+  TimeOfDay? Time;
 
-  void _pickDailySchedule() async {
-    final now = DateTime.now();
-    final DateTime? pickedstartDate = await showDatePicker(
-      context: context,
-      initialDate: _selectedDay ?? now,
-      firstDate: now,
-      lastDate: DateTime(2030),
-    );
-    if (pickedstartDate == null) return;
+  await showDialog(
+    context: context,
+    builder: (context) {
+      final startController = TextEditingController();
+      final endController = TextEditingController();
+      final tController = TextEditingController();
 
-    final DateTime? pickedendDate = await showDatePicker(
-      context: context,
-      initialDate: _selectedDay ?? now,
-      firstDate: now,
-      lastDate: DateTime(2030),
-    );
-    if (pickedendDate == null) return;
+      return AlertDialog(
+        title: Text("Custom Schedule"),
+        content: SingleChildScrollView(
+          child: Column(
+            children: [
+              TextField(
+                controller: startController,
+                readOnly: true,
+                decoration: InputDecoration(labelText: "Start Date"),
+                onTap: () async {
+                  final pickedstart = await showDatePicker(
+                    context: context,
+                    initialDate: DateTime.now(),
+                    firstDate: DateTime(2020),
+                    lastDate: DateTime(2100),
+                  );
+                  if (pickedstart != null) {
+                    startDate = pickedstart;
+                    startController.text = pickedstart.toLocal().toString().split(' ')[0];
+                  }
+                },
+              ),
+              TextField(
+                controller: endController,
+                readOnly: true,
+                decoration: InputDecoration(labelText: "End Date"),
+                onTap: () async {
+                  final pickedend = await showDatePicker(
+                    context: context,
+                    initialDate: DateTime.now(),
+                    firstDate: DateTime(2020),
+                    lastDate: DateTime(2100),
+                  );
+                  if (pickedend != null) {
+                    endDate = pickedend;
+                    endController.text = pickedend.toLocal().toString().split(' ')[0];
+                  }
+                },
+              ),              
+              TextField(
+                controller: tController,
+                readOnly: true,
+                decoration: InputDecoration(labelText: "Time"),
+                onTap: () async {
+                    final TimeOfDay? pickedTime = await showTimePicker(
+                      context: context,
+                      initialTime: TimeOfDay(hour: 8, minute: 0),
+                    );
 
-    final TimeOfDay? pickedTime = await showTimePicker(
-      context: context,
-      initialTime: TimeOfDay(hour: 8, minute: 0),
-    );
+                  if (pickedTime != null) {
+                    Time = pickedTime;
+                    tController.text = pickedTime.toString().split(' ')[0];
+                  }
+                },
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Scheduler(startDate!, [[Time!]],endDate!);   
+              Navigator.pop(context);         
+            },
+            child: Text("Done"),
+          ),
+        ],
+      );
+    },
+  );
+}
 
-    if (pickedTime == null) return;
-    Scheduler(pickedstartDate, [[pickedTime]],pickedendDate);
-
-  }
   void _pickCustomSchedule() async {
-    final now = DateTime.now();
-    final DateTime? pickedstartDate = await showDatePicker(
+    DateTime? startDate;
+    DateTime? endDate;
+    int? Periode;
+
+    await showDialog(
       context: context,
-      initialDate: _selectedDay ?? now,
-      firstDate: now,
-      lastDate: DateTime(2030),
+      builder: (context) {
+        final startController = TextEditingController();
+        final endController = TextEditingController();
+        final pController = TextEditingController();
+
+        return AlertDialog(
+          title: Text("Custom Schedule"),
+          content: SingleChildScrollView(
+            child: Column(
+              children: [
+                TextField(
+                  controller: startController,
+                  readOnly: true,
+                  decoration: InputDecoration(labelText: "Start Date"),
+                  onTap: () async {
+                    final pickedstart = await showDatePicker(
+                      context: context,
+                      initialDate: DateTime.now(),
+                      firstDate: DateTime(2020),
+                      lastDate: DateTime(2100),
+                    );
+                    if (pickedstart != null) {
+                      startDate = pickedstart;
+                      startController.text = pickedstart.toLocal().toString().split(' ')[0];
+                    }
+                  },
+                ),
+                TextField(
+                  controller: endController,
+                  readOnly: true,
+                  decoration: InputDecoration(labelText: "End Date"),
+                  onTap: () async {
+                    final pickedend = await showDatePicker(
+                      context: context,
+                      initialDate: DateTime.now(),
+                      firstDate: DateTime(2020),
+                      lastDate: DateTime(2100),
+                    );
+                    if (pickedend != null) {
+                      endDate = pickedend;
+                      endController.text = pickedend.toLocal().toString().split(' ')[0];
+                    }
+                  },
+                ),              
+                TextField(
+                  controller: pController,
+                  decoration: InputDecoration(labelText: "Period (number of time sets)"),
+                  keyboardType: TextInputType.number,
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () async {
+                if (pController.text.isNotEmpty) {
+                  Periode = int.tryParse(pController.text);
+                }
+                /* add the function that adds periode of alarms */
+                List<List<TimeOfDay>>times = [];
+                for(int p=0;p<Periode!;p++){
+                  List<TimeOfDay>? TMP = await showTimePickerPopup(context,p+1);
+                  if (TMP != null) times.add(TMP);
+                }
+                Navigator.pop(context);
+                print("times :");
+                print(times);
+                Scheduler(startDate!, times, endDate!);
+              },
+              child: Text("Done"),
+            ),
+          ],
+        );
+      },
     );
-    if (pickedstartDate == null) return;
-
-    final DateTime? pickedendDate = await showDatePicker(
-      context: context,
-      initialDate: _selectedDay ?? now,
-      firstDate: now,
-      lastDate: DateTime(2030),
-    );
-    if (pickedendDate == null) return;
-
-  
-
   }
 
   void _showScheduleOptions(BuildContext context) {
@@ -165,7 +283,7 @@ class _SecondPageState extends State<SecondPage> {
                 title: Text("Daily"),
                 onTap: () {
                   Navigator.pop(context);
-                  _pickDailySchedule();
+                  _pickDailySchedule(context);
                 },
               ),
               ListTile(
@@ -252,4 +370,69 @@ class _SecondPageState extends State<SecondPage> {
       SnackBar(content: Text("Scheduled notification for $label")),
     );
   }
+}
+
+Future<List<TimeOfDay>?> showTimePickerPopup(BuildContext context, int day) async {
+  List<TimeOfDay> selectedTimes = []; // Correctly initialize as a list
+
+  await showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      return StatefulBuilder(
+        builder: (context, setState) {
+          return AlertDialog(
+            title: Text('Select day $day of the periode'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ElevatedButton.icon(
+                  icon: Icon(Icons.add),
+                  label: Text("Add Time"),
+                  onPressed: () async {
+                    TimeOfDay? picked = await showTimePicker(
+                      context: context,
+                      initialTime: TimeOfDay(hour: 8, minute: 0),
+                    );
+                    if (picked != null) {
+                      setState(() {
+                        selectedTimes.add(picked); // Add to list
+                      });
+                    }
+                  },
+                ),
+                SizedBox(height: 16),
+                if (selectedTimes.isEmpty)
+                  Text("No times selected yet.")
+                else
+                  SizedBox(
+                    height: 150,
+                    child: SingleChildScrollView(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: selectedTimes.map((time) {
+                          return ListTile(
+                            leading: Icon(Icons.access_time),
+                            title: Text(time.format(context)),
+                          );
+                        }).toList(),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                child: Text("Done"),
+                onPressed: () {
+                  Navigator.pop(context, selectedTimes); // Return list on close
+                },
+              ),
+            ],
+          );
+        },
+      );
+    },
+  );
+
+  return selectedTimes; // Return the list after dialog closes
 }
