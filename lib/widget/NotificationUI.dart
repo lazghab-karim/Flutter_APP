@@ -34,21 +34,48 @@ class NotificationUI extends State<notifButton> {
 
   @override
   Widget build(BuildContext context) {
-    return FilledButton(
-          onPressed:() =>  _showReminderDialog(context),
-          onHover: (hovering) {
-            setState(() {
-              _isHovered = hovering;
-            });
-          },
-          style: ButtonStyle(
-            backgroundColor: WidgetStateProperty.all(
-              _isHovered ? Colors.grey : Colors.blue,
-            ),
-            foregroundColor: WidgetStateProperty.all(Colors.white),
-            minimumSize: WidgetStateProperty.all(Size(150, 50)),
+    return Container(
+      width: 150,
+      height: 50,
+      decoration: BoxDecoration(
+        color: Colors.blue,
+        borderRadius: BorderRadius.circular(16), // optionnel, pour arrondir
+      ),
+      child: Row(
+        children: [
+          Center(
+            child: Text(
+              "• ${widget.time.format(context)}",
+              style: TextStyle(color: Colors.white),
+            )
           ),
-          child: Text("• ${widget.time.format(context)}"),
-        );
+          Expanded( // Takes up the remaining space
+            child: Align(
+              alignment: Alignment.centerRight,
+              child: FilledButton(
+                
+                style: ButtonStyle(
+                  fixedSize: WidgetStateProperty.all(Size(2, 2)),
+                  backgroundColor: WidgetStateProperty.all(Colors.red[900]),
+                ),
+                /* remove the date when pressed */
+                onPressed:() => {},
+                onHover: (hovering){
+                  setState(() {
+                    _isHovered=hovering;
+                  });
+                },
+                child: Icon(
+                  Icons.delete,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+          ),
+          SizedBox(width:10)
+        ],
+      )
+      );
+
   }
 }

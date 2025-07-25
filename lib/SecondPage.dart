@@ -1,8 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'notifications.dart';
+import 'InfoMedicalPill.dart';
 import 'widget/NotificationUI.dart';
-import 'package:timezone/timezone.dart' as tz;
+
+
+
+class AlarmInfo{
+  String name;
+  String dosage;
+  int amountForThisAlarm;
+  TimeOfDay timeOfThePill;
+  String notes;
+  AlarmInfo({required this.name, required this.timeOfThePill,this.amountForThisAlarm=-1,this.notes="",this.dosage=""});
+}
 
 class SecondPage extends StatefulWidget {
   @override
@@ -16,7 +27,7 @@ class _SecondPageState extends State<SecondPage> {
   DateTime Last_calendar = DateTime(2080, 12, 31);
 
   // Map of calendar events (key: date, value: list of labels)
-  Map<DateTime, List<TimeOfDay>> _events = {};
+  MapOfAlarms _events = MapOfAlarms();
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -37,6 +48,9 @@ class _SecondPageState extends State<SecondPage> {
                     _selectedDay = DateTime(selectedDay.year,selectedDay.month,selectedDay.day);
                     _focusedDay = DateTime(focusedDay.year,focusedDay.month,focusedDay.day);
                   });
+                  if (_selectedDay !=null && !_events.alarmsTimeIsEmpty(_selectedDay!)){
+                    showNotificationThatDay(_selectedDay!);
+                  }
                 },
                 calendarStyle: CalendarStyle(
                   todayDecoration: BoxDecoration(
@@ -54,36 +68,38 @@ class _SecondPageState extends State<SecondPage> {
                 ),
               ),
               SizedBox(height: 20),
-
-
               FilledButton(
                 onPressed: () => _showScheduleOptions(context),  
                 child: Text("Add Reminder"),
               ),
-
-
-              
               SizedBox(height: 20),
-              if(_selectedDay != null) ...[
-                Text("Reminders on  ${_selectedDay!.toLocal().toString().split(' ')[0]} ",
-                  style: TextStyle(fontWeight: FontWeight.bold)
-                ),
-                ..._getEventsForDay(_selectedDay!).map((e) => notifButton(time:e),
-                ),
-              ],
               ElevatedButton(
-              onPressed: () {
-                Scheduler(
-                  DateTime(DateTime.now().year,DateTime.now().month,DateTime.now().day), // start date
-                  [
-                    [TimeOfDay(hour: 9, minute: 0)],               // Day 1
-                    [TimeOfDay(hour: 10, minute: 30)],             // Day 2
-                    [TimeOfDay(hour: 8, minute: 15), TimeOfDay(hour: 14, minute: 0)], // Day 3
-                  ],
-                  Last_calendar
-                );
+                onPressed: () {
+                  setState(() {
+                    _focusedDay=DateTime(DateTime.now().year,DateTime.now().month,DateTime.now().day);
+                  });
+                },
+                child: Text("Return to today"),
+              ),
+              SizedBox(height: 20),
+
+              ElevatedButton(
+              onPressed: () async {
+                  final picked = await showDatePicker(
+                    context: context,
+                    initialDate: DateTime.now(),
+                    firstDate: First_Calendar,
+                    lastDate: Last_calendar,
+                  );
+                  if (picked != null) {
+                    setState(() {
+                      _focusedDay=DateTime(picked.year,picked.month,picked.day);
+                      _selectedDay = DateTime(picked.year,picked.month,picked.day);
+                    });
+                  }
+
               },
-              child: Text("Schedule Events"),
+              child: Text("search for Day"),
             ),
             ],
           ),
@@ -96,6 +112,8 @@ class _SecondPageState extends State<SecondPage> {
     _pickDateTimeAndSchedule();
   }
   void _pickDailySchedule(BuildContext context) async {
+  String notes="";
+  String? name;
   DateTime? startDate;
   DateTime? endDate;
   TimeOfDay? Time;
@@ -103,6 +121,8 @@ class _SecondPageState extends State<SecondPage> {
   await showDialog(
     context: context,
     builder: (context) {
+      final nameController = TextEditingController();
+      final notesController = TextEditingController();
       final startController = TextEditingController();
       final endController = TextEditingController();
       final tController = TextEditingController();
@@ -112,6 +132,16 @@ class _SecondPageState extends State<SecondPage> {
         content: SingleChildScrollView(
           child: Column(
             children: [
+              TextField(
+                controller: nameController,
+                decoration: InputDecoration(labelText: "Pill name"),
+                keyboardType: TextInputType.text,
+              ),
+              TextField(
+                controller: notesController,
+                decoration: InputDecoration(labelText: "Pill notes"),
+                keyboardType: TextInputType.text,
+              ),
               TextField(
                 controller: startController,
                 readOnly: true,
@@ -155,11 +185,11 @@ class _SecondPageState extends State<SecondPage> {
                       context: context,
                       initialTime: TimeOfDay(hour: 8, minute: 0),
                     );
-
                   if (pickedTime != null) {
                     Time = pickedTime;
                     tController.text = pickedTime.toString().split(' ')[0];
                   }
+
                 },
               ),
             ],
@@ -168,18 +198,35 @@ class _SecondPageState extends State<SecondPage> {
         actions: [
           TextButton(
             onPressed: () {
-              Scheduler(startDate!, [[Time!]],endDate!);   
-              Navigator.pop(context);         
+                if (nameController.text.isNotEmpty) {
+                  name =nameController.text;
+                }
+                if (notesController.text.isNotEmpty) {
+                  notes =notesController.text;
+                }else{
+                  notes="";
+                }
+                print("name: $name, notes: $notes, time: $Time, startdate: $startDate, enddate: $endDate");
+                if( startDate!=null && endDate!=null && Time!=null && name!=null){
+
+                  InfoMedicalPill pills=InfoMedicalPill(name: name!,notes: notes!, time: Time!);
+                  Scheduler(startDate!, [[pills]],endDate!);   
+
+                }
+                Navigator.pop(context);  
             },
             child: Text("Done"),
           ),
-        ],
+
+          ],
       );
     },
   );
 }
 
   void _pickCustomSchedule() async {
+    String? notes;
+    String? name;
     DateTime? startDate;
     DateTime? endDate;
     int? Periode;
@@ -187,6 +234,8 @@ class _SecondPageState extends State<SecondPage> {
     await showDialog(
       context: context,
       builder: (context) {
+        final nameController = TextEditingController();
+        final notesController = TextEditingController();
         final startController = TextEditingController();
         final endController = TextEditingController();
         final pController = TextEditingController();
@@ -197,6 +246,17 @@ class _SecondPageState extends State<SecondPage> {
             child: Column(
               children: [
                 TextField(
+                  controller: nameController,
+                  decoration: InputDecoration(labelText: "Pill name"),
+                  keyboardType: TextInputType.text,
+                ),
+                TextField(
+                  controller: notesController,
+                  decoration: InputDecoration(labelText: "Pill notes"),
+                  keyboardType: TextInputType.text,
+                ),
+
+                TextField(
                   controller: startController,
                   readOnly: true,
                   decoration: InputDecoration(labelText: "Start Date"),
@@ -204,8 +264,8 @@ class _SecondPageState extends State<SecondPage> {
                     final pickedstart = await showDatePicker(
                       context: context,
                       initialDate: DateTime.now(),
-                      firstDate: DateTime(2020),
-                      lastDate: DateTime(2100),
+                      firstDate: First_Calendar,
+                      lastDate: Last_calendar,
                     );
                     if (pickedstart != null) {
                       startDate = pickedstart;
@@ -244,16 +304,30 @@ class _SecondPageState extends State<SecondPage> {
                 if (pController.text.isNotEmpty) {
                   Periode = int.tryParse(pController.text);
                 }
-                /* add the function that adds periode of alarms */
-                List<List<TimeOfDay>>times = [];
-                for(int p=0;p<Periode!;p++){
-                  List<TimeOfDay>? TMP = await showTimePickerPopup(context,p+1);
-                  if (TMP != null) times.add(TMP);
+                name = nameController.text;
+                notes = notesController.text;
+                if(Periode!=null && name!=null && startDate!=null && endDate!=null){
+
+                  /* add the function that adds periode of alarms */
+                  List<List<TimeOfDay>>times = [];
+                  for(int p=0;p<Periode!;p++){
+                    List<TimeOfDay>? TMP = await showTimePickerPopup(context,p+1);
+                    if (TMP != null) times.add(TMP);
+                  }
+                  List<List<InfoMedicalPill>>Pills=[];
+                  times.forEach((eachday){
+                    List<InfoMedicalPill>TMP=[];
+                    eachday.forEach((time){
+                      TMP.add(InfoMedicalPill(name: name!, time: time,notes:notes!));
+                    });
+                    Pills.add(TMP);
+
+                  });
+                  print("times : $times");
+                  Scheduler(startDate!, Pills, endDate!);
+
                 }
                 Navigator.pop(context);
-                print("times :");
-                print(times);
-                Scheduler(startDate!, times, endDate!);
               },
               child: Text("Done"),
             ),
@@ -262,7 +336,31 @@ class _SecondPageState extends State<SecondPage> {
       },
     );
   }
+  
+  
+  void showNotificationThatDay(DateTime day) async {
+    await showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+        title: Text("notifications for ${day.year}/${day.month}/${day.day}"),
+        content: SingleChildScrollView(
+            child: Column(children: [
+              if(_selectedDay!=null)...[
+                ..._getEventsForDay(_selectedDay!).map((e) => [
+                  notifButton(time: e.time),
+                  SizedBox(height: 20),
+                ]).expand((widgetList) => widgetList),
+                ]
+              ]
+            ),
+          )
+        );
+      
+      }
+    );
 
+  }
   void _showScheduleOptions(BuildContext context) {
     showDialog(
       context: context,
@@ -300,74 +398,124 @@ class _SecondPageState extends State<SecondPage> {
     );
   }
 
-  void Scheduler(DateTime startdate, List<List<TimeOfDay>> each_day,DateTime enddate){
+  void Scheduler(DateTime startdate, List<List<InfoMedicalPill>> each_day,DateTime enddate){
     int day = 0;
     if (enddate.isAfter(Last_calendar)){
       enddate = Last_calendar;
     }
-    while(startdate.isBefore(enddate) || startdate.isAtSameMomentAs(enddate)){
+    DateTime currect_today = startdate;
+    while(currect_today.isBefore(enddate) || currect_today.isAtSameMomentAs(enddate)){
       for (int i = 0;i<each_day[day].length;i++){
-        TimeOfDay Time = each_day[day][i];
+        InfoMedicalPill pill = each_day[day][i];
+        DateTime daytime = DateTime(currect_today.year,currect_today.month,currect_today.day,
+                                    pill.time.hour,pill.time.minute);
+        if(daytime==null || pill.name==null){
+          print("YESS IT4S NOLL");
+        }
         setState(() {
-          _events.putIfAbsent(startdate, () => []).add(Time);
+          _events.addAlarm(daytime, pill.name);
         });
       }
 
       day+=1;
-      startdate=startdate.add(Duration(days: 1));
+      currect_today=currect_today.add(Duration(days: 1));
       if(day == each_day.length) day=0;
     }
     print(_events);
   }
 
-  List<TimeOfDay> _getEventsForDay(DateTime day) {
+  List<InfoMedicalPill> _getEventsForDay(DateTime day) {
     final cleanDate = DateTime( day.year, day.month,day.day);
-    return _events[cleanDate] ?? [];
+    return _events.getPillsFromDate(cleanDate);
   }
 
   Future<void> _pickDateTimeAndSchedule() async {
+    String? name;
+    String? notes;
+    DateTime? pickedDate;
+    TimeOfDay? pickedTime;
     final now = DateTime.now();
-
-    // Pick date
-    final DateTime? pickedDate = await showDatePicker(
+    await showDialog(
       context: context,
-      initialDate: _selectedDay ?? now,
-      firstDate: now,
-      lastDate: DateTime(2030),
-    );
+      builder: (context) {
+        final nameController = TextEditingController();
+        final notesController = TextEditingController();
+        final datetimeController = TextEditingController();
 
-    if (pickedDate == null) return;
+        return AlertDialog(
+          title: Text("Daily Schedule"),
+          content: SingleChildScrollView(
+            child: Column(
+              children: [
+                TextField(
+                  controller: nameController,
+                  decoration: InputDecoration(labelText: "Pill name"),
+                  keyboardType: TextInputType.text,
+                ),
+                TextField(
+                  controller: notesController,
+                  decoration: InputDecoration(labelText: "Pill notes"),
+                  keyboardType: TextInputType.text,
+                ),
 
-    // Pick time
-    final TimeOfDay? pickedTime = await showTimePicker(
-      context: context,
-      initialTime: TimeOfDay(hour: 8, minute: 0),
-    );
+                TextField(
+                  controller: datetimeController,
+                  readOnly: true,
+                  decoration: InputDecoration(labelText: "pick date and time"),
+                  onTap: () async {
+                    final pickeddate = await showDatePicker(
+                      context: context,
+                      initialDate: DateTime.now(),
+                      firstDate: First_Calendar,
+                      lastDate: Last_calendar,
+                    );
+                    if (pickeddate != null) {
+                      pickedDate = pickeddate;
+                      datetimeController.text = pickeddate.toLocal().toString().split(' ')[0];
+                    }
+                    final TimeOfDay? pickedtime = await showTimePicker(
+                      context: context,
+                      initialTime: TimeOfDay(hour: 8, minute: 0),
+                    );
+                    if (pickedtime != null && pickedDate!=null){
+                      pickedTime = pickedtime;
+                      pickedDate=DateTime(pickedDate!.year,pickedDate!.month,pickedDate!.day,
+                                          pickedtime.hour,pickedtime.minute);
+                    }
 
-    if (pickedTime == null) return;
+                  },
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () async {
+                name = nameController.text;
+                notes = notesController.text;
+                if( pickedTime!=null && pickedDate!=null ){
+                  final label = "Reminder at ${pickedTime!.format(context)}";
 
-    // Combine date and time
-    final DateTime scheduledTime = DateTime(
-      pickedDate.year,
-      pickedDate.month,
-      pickedDate.day,
-      pickedTime.hour,
-      pickedTime.minute,
-    );
+                  setState(() {
+                    _events.addAlarm(pickedDate!,name!, notes);
+                  });
 
-    final label = "Reminder at ${pickedTime.format(context)}";
+                  // Schedule the notification
+                  await scheduleNotification(pickedDate!, "Reminder", label);
 
-    // Add to local events map
-    final cleanDate = DateTime(pickedDate.year, pickedDate.month, pickedDate.day);
-    setState(() {
-      _events.putIfAbsent(cleanDate, () => []).add(pickedTime);
-    });
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text("Scheduled notification for $label")),
+                  );
+                }
+                Navigator.pop(context); // Return list on close
 
-    // Schedule the notification
-    await scheduleNotification(scheduledTime, "Reminder", label);
+              },
+              child: Text("Done"),
+            ),
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text("Scheduled notification for $label")),
+          ],
+        );
+      },
     );
   }
 }
@@ -387,17 +535,22 @@ Future<List<TimeOfDay>?> showTimePickerPopup(BuildContext context, int day) asyn
               children: [
                 ElevatedButton.icon(
                   icon: Icon(Icons.add),
-                  label: Text("Add Time"),
+                  label: Text("Add Pill Alarm"),
                   onPressed: () async {
-                    TimeOfDay? picked = await showTimePicker(
+
+                    TimeOfDay? pickedTime = await showTimePicker(
                       context: context,
                       initialTime: TimeOfDay(hour: 8, minute: 0),
                     );
-                    if (picked != null) {
+                    if (pickedTime != null) {
                       setState(() {
-                        selectedTimes.add(picked); // Add to list
+                        selectedTimes.add(pickedTime); // Add to list
                       });
                     }
+
+
+
+                    
                   },
                 ),
                 SizedBox(height: 16),
