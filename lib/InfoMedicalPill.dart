@@ -121,7 +121,7 @@ class MapOfAlarms{
           }
 
           // Optional: remove pill name if its list is empty
-          if (pillsTime[pill.name]!.isEmpty) {
+          if ( pillsTime[pill.name]!=null && pillsTime[pill.name]!.isEmpty) {
             pillsTime.remove(pill.name);
           }
         }
@@ -148,7 +148,7 @@ class MapOfAlarms{
   }
 
   bool pillsTimeIsEmpty(String name){
-    return pillsTime[name]!.isEmpty;
+    return pillsTime[name]!=null && pillsTime[name]!.isEmpty;
   }
   
   List<InfoMedicalPill> getPillsFromDate(DateTime day){

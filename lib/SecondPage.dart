@@ -108,9 +108,6 @@ class _SecondPageState extends State<SecondPage> {
     );
   }
 
-  void _pickDateTimeAndScheduleOnce(){
-    _pickDateTimeAndSchedule();
-  }
   void _pickDailySchedule(BuildContext context) async {
   String notes="";
   String? name;
@@ -323,7 +320,6 @@ class _SecondPageState extends State<SecondPage> {
                     Pills.add(TMP);
 
                   });
-                  print("times : $times");
                   Scheduler(startDate!, Pills, endDate!);
 
                 }
@@ -409,9 +405,6 @@ class _SecondPageState extends State<SecondPage> {
         InfoMedicalPill pill = each_day[day][i];
         DateTime daytime = DateTime(currect_today.year,currect_today.month,currect_today.day,
                                     pill.time.hour,pill.time.minute);
-        if(daytime==null || pill.name==null){
-          print("YESS IT4S NOLL");
-        }
         setState(() {
           _events.addAlarm(daytime, pill.name);
         });
@@ -421,7 +414,6 @@ class _SecondPageState extends State<SecondPage> {
       currect_today=currect_today.add(Duration(days: 1));
       if(day == each_day.length) day=0;
     }
-    print(_events);
   }
 
   List<InfoMedicalPill> _getEventsForDay(DateTime day) {
@@ -429,7 +421,7 @@ class _SecondPageState extends State<SecondPage> {
     return _events.getPillsFromDate(cleanDate);
   }
 
-  Future<void> _pickDateTimeAndSchedule() async {
+  Future<void> _pickDateTimeAndScheduleOnce() async {
     String? name;
     String? notes;
     DateTime? pickedDate;
@@ -518,6 +510,7 @@ class _SecondPageState extends State<SecondPage> {
       },
     );
   }
+ 
 }
 
 Future<List<TimeOfDay>?> showTimePickerPopup(BuildContext context, int day) async {
