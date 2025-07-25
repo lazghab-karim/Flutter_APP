@@ -144,7 +144,7 @@ class MapOfAlarms{
   }
   bool alarmsTimeIsEmpty(DateTime day){
     day = DateTime(day.year,day.month,day.day);
-    return alarmsTime[day]!.isEmpty;
+    return alarmsTime[day]!=null && alarmsTime[day]!.isEmpty;
   }
 
   bool pillsTimeIsEmpty(String name){
