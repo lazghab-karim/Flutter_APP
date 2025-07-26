@@ -5,16 +5,6 @@ import 'InfoMedicalPill.dart';
 import 'widget/NotificationUI.dart';
 
 
-
-class AlarmInfo{
-  String name;
-  String dosage;
-  int amountForThisAlarm;
-  TimeOfDay timeOfThePill;
-  String notes;
-  AlarmInfo({required this.name, required this.timeOfThePill,this.amountForThisAlarm=-1,this.notes="",this.dosage=""});
-}
-
 class SecondPage extends StatefulWidget {
   @override
   _SecondPageState createState() => _SecondPageState();
@@ -23,11 +13,10 @@ class SecondPage extends StatefulWidget {
 class _SecondPageState extends State<SecondPage> {
   DateTime _focusedDay = DateTime(DateTime.now().year,DateTime.now().month,DateTime.now().day);
   DateTime? _selectedDay;
-  DateTime First_Calendar = DateTime(DateTime.now().year, 1, 1);
+  DateTime First_Calendar = DateTime(2025, 1, 1);
   DateTime Last_calendar = DateTime(2080, 12, 31);
 
   // Map of calendar events (key: date, value: list of labels)
-  MapOfAlarms _events = MapOfAlarms();
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -48,7 +37,7 @@ class _SecondPageState extends State<SecondPage> {
                     _selectedDay = DateTime(selectedDay.year,selectedDay.month,selectedDay.day);
                     _focusedDay = DateTime(focusedDay.year,focusedDay.month,focusedDay.day);
                   });
-                  if (_selectedDay !=null && !_events.alarmsTimeIsEmpty(_selectedDay!)){
+                  if (_selectedDay !=null && !MapOfAlarms.alarmsTimeIsEmpty(_selectedDay!)){
                     showNotificationThatDay(_selectedDay!);
                   }
                 },
@@ -206,7 +195,7 @@ class _SecondPageState extends State<SecondPage> {
                 print("name: $name, notes: $notes, time: $Time, startdate: $startDate, enddate: $endDate");
                 if( startDate!=null && endDate!=null && Time!=null && name!=null){
 
-                  InfoMedicalPill pills=InfoMedicalPill(name: name!,notes: notes!, time: Time!);
+                  InfoMedicalPill pills=InfoMedicalPill(name: name!,notes: notes, time: Time!);
                   Scheduler(startDate!, [[pills]],endDate!);   
 
                 }
@@ -352,10 +341,8 @@ class _SecondPageState extends State<SecondPage> {
             ),
           )
         );
-      
       }
     );
-
   }
   void _showScheduleOptions(BuildContext context) {
     showDialog(
@@ -406,7 +393,7 @@ class _SecondPageState extends State<SecondPage> {
         DateTime daytime = DateTime(currect_today.year,currect_today.month,currect_today.day,
                                     pill.time.hour,pill.time.minute);
         setState(() {
-          _events.addAlarm(daytime, pill.name);
+          MapOfAlarms.addAlarm(daytime, pill.name);
         });
       }
 
@@ -418,7 +405,7 @@ class _SecondPageState extends State<SecondPage> {
 
   List<InfoMedicalPill> _getEventsForDay(DateTime day) {
     final cleanDate = DateTime( day.year, day.month,day.day);
-    return _events.getPillsFromDate(cleanDate);
+    return MapOfAlarms.getPillsFromDate(cleanDate);
   }
 
   Future<void> _pickDateTimeAndScheduleOnce() async {
@@ -426,7 +413,6 @@ class _SecondPageState extends State<SecondPage> {
     String? notes;
     DateTime? pickedDate;
     TimeOfDay? pickedTime;
-    final now = DateTime.now();
     await showDialog(
       context: context,
       builder: (context) {
@@ -474,7 +460,6 @@ class _SecondPageState extends State<SecondPage> {
                       pickedDate=DateTime(pickedDate!.year,pickedDate!.month,pickedDate!.day,
                                           pickedtime.hour,pickedtime.minute);
                     }
-
                   },
                 ),
               ],
@@ -489,7 +474,7 @@ class _SecondPageState extends State<SecondPage> {
                   final label = "Reminder at ${pickedTime!.format(context)}";
 
                   setState(() {
-                    _events.addAlarm(pickedDate!,name!, notes);
+                    MapOfAlarms.addAlarm(pickedDate!,name!, notes);
                   });
 
                   // Schedule the notification
@@ -504,13 +489,11 @@ class _SecondPageState extends State<SecondPage> {
               },
               child: Text("Done"),
             ),
-
           ],
         );
       },
     );
   }
- 
 }
 
 Future<List<TimeOfDay>?> showTimePickerPopup(BuildContext context, int day) async {
@@ -540,10 +523,6 @@ Future<List<TimeOfDay>?> showTimePickerPopup(BuildContext context, int day) asyn
                         selectedTimes.add(pickedTime); // Add to list
                       });
                     }
-
-
-
-                    
                   },
                 ),
                 SizedBox(height: 16),

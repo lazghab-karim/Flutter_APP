@@ -25,10 +25,10 @@ class InfoMedicalPillAlarm{
 }
 
 class MapOfAlarms{
-  Map<DateTime, List<InfoMedicalPill>>alarmsTime={};
-  Map<String, List<DateTime>>pillsTime={};
+  static Map<DateTime, List<InfoMedicalPill>>alarmsTime={};
+  static Map<String, List<DateTime>>pillsTime={};
 
-  void addAlarm(DateTime daytime, String name, [String? notes] ){
+  static void addAlarm(DateTime daytime, String name, [String? notes] ){
     DateTime date = DateTime(daytime.year,daytime.month,daytime.day);
     TimeOfDay time = TimeOfDay(hour: daytime.hour, minute: daytime.minute);
     print("addAlarm: time: $time, name: $name, notes: $notes");
@@ -38,7 +38,7 @@ class MapOfAlarms{
     pillsTime.putIfAbsent(name, () => []).add(daytime);
   }
 
-  void removeAlarmUsiungDateTime(DateTime daytime){
+  static void removeAlarmUsiungDateTime(DateTime daytime){
     
     DateTime day = DateTime(daytime.year,daytime.month,daytime.day);
     TimeOfDay time = TimeOfDay(hour: daytime.hour, minute: daytime.minute);
@@ -86,7 +86,7 @@ class MapOfAlarms{
     }
   }
 
-  void removeAlarmUsiungDateTimeAndName(DateTime daytime, String name){
+  static void removeAlarmUsiungDateTimeAndName(DateTime daytime, String name){
     
     DateTime day = DateTime(daytime.year,daytime.month,daytime.day);
     TimeOfDay time = TimeOfDay(hour: daytime.hour, minute: daytime.minute);
@@ -139,19 +139,19 @@ class MapOfAlarms{
     return "alarmsTime: $alarmsTime \npillsTime: $pillsTime ";
   }
 
-  List<DateTime> getDateTimesFromName(String name){
+  static List<DateTime> getDateTimesFromName(String name){
     return pillsTime[name] ?? [];
   }
-  bool alarmsTimeIsEmpty(DateTime day){
+  static bool alarmsTimeIsEmpty(DateTime day){
     day = DateTime(day.year,day.month,day.day);
-    return alarmsTime[day]!=null && alarmsTime[day]!.isEmpty;
+    return alarmsTime[day]==null || alarmsTime[day]!.isEmpty;
   }
 
-  bool pillsTimeIsEmpty(String name){
-    return pillsTime[name]!=null && pillsTime[name]!.isEmpty;
+  static bool pillsTimeIsEmpty(String name){
+    return pillsTime[name]==null || pillsTime[name]!.isEmpty;
   }
   
-  List<InfoMedicalPill> getPillsFromDate(DateTime day){
+  static List<InfoMedicalPill> getPillsFromDate(DateTime day){
     day = DateTime(day.year,day.month,day.day);
     return alarmsTime[day] ?? [];
   }

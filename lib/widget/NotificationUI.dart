@@ -16,22 +16,6 @@ class notifButton extends StatefulWidget {
 
 class NotificationUI extends State<notifButton> {
   bool _isHovered = false;
-  void _showReminderDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Reminder'),
-        content: Text('Reminder is set for ${widget.time.format(context)}'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: Text('OK'),
-          ),
-        ],
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Container(
